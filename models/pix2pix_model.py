@@ -93,15 +93,17 @@ class Pix2PixModel(BaseModel):
         fake_AB = torch.cat((self.real_A, self.fake_B), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator
         pred_fake = self.netD(fake_AB.detach())
         #self.loss_D_fake = self.criterionGAN(pred_fake, False)
+        self.loss_D_fake = torch.mean((pred_fake) **2)
 
         # Real
         real_AB = torch.cat((self.real_A, self.real_B), 1)
         pred_real = self.netD(real_AB)
         #self.loss_D_real = self.criterionGAN(pred_real, True)
+        self.loss_D_real = 0.5 * (torch.mean((pred_real - 1) **2))
         
         # combine loss and calculate gradients
         #self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5
-        self.loss_D = 0.5 * (torch.mean((pred_real - 1) **2)) + torch.mean((pred_fake) **2)
+        self.loss_D =  0.5 * (self.loss_D_fake + self.loss_D_real)
         self.loss_D.backward()
 
     def backward_G(self):
